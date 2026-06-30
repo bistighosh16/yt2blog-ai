@@ -733,11 +733,27 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-url = st.text_input(
-    "YouTube URL",
-    placeholder="🔗 https://www.youtube.com/watch?v=...",
-    label_visibility="collapsed"
-)
+# Two tabs: YouTube URL OR Paste Transcript
+input_tab1, input_tab2 = st.tabs(["📎 YouTube URL", "📝 Paste Transcript"])
+
+with input_tab1:
+    url = st.text_input(
+        "YouTube URL",
+        placeholder="🔗 https://www.youtube.com/watch?v=...",
+        label_visibility="collapsed",
+        key="url_input"
+    )
+    st.caption("⚡ Works best on local. Cloud version may face YouTube IP blocks — use the next tab!")
+
+with input_tab2:
+    pasted_transcript = st.text_area(
+        "Paste your transcript here",
+        placeholder="Paste the YouTube transcript here...\n\n💡 Tip: On YouTube, click '...' under the video → 'Show transcript' → copy all text!",
+        height=200,
+        label_visibility="collapsed",
+        key="transcript_input"
+    )
+    st.caption("💜 Pro tip: This works with ANY text — articles, notes, anything!")
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
@@ -747,128 +763,137 @@ with col2:
 # GENERATE BLOG
 # ==========================================
 if generate_btn:
-    if not url:
-        st.error("🚨 Please paste a YouTube URL first, bestie!")
-    else:
+    transcript = None
+    error = None
+    video_id = None
+    
+    # Determine which input was used
+    if pasted_transcript and pasted_transcript.strip():
+        # User pasted a transcript directly
+        transcript = pasted_transcript.strip()
+        video_id = "manual_input"
+        st.info("📝 Using your pasted transcript!")
+    elif url and url.strip():
+        # User provided a YouTube URL
         with st.spinner("🔍 Extracting video info..."):
             video_id = extract_video_id(url)
         
         if not video_id:
             st.error("❌ Invalid YouTube URL. Please check and try again!")
-        else:
-            st.markdown("### 🎥 Video Preview")
-            st.video(f"https://www.youtube.com/watch?v={video_id}")
+            st.stop()
+        
+        st.markdown("### 🎥 Video Preview")
+        st.video(f"https://www.youtube.com/watch?v={video_id}")
+        
+        with st.spinner("📜 Fetching transcript..."):
+            transcript, error = get_transcript(video_id)
+    else:
+        st.error("🚨 Please paste a YouTube URL OR a transcript first, bestie! 💜")
+        st.stop()
+    
+    if error:
+        st.error(error)
+    elif transcript:
+        # Generate everything!
+        word_count = len(transcript.split())
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">{word_count:,}</div>
+                <div class="metric-label">Transcript Words</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">{tone}</div>
+                <div class="metric-label">Selected Tone</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col3:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">{length}</div>
+                <div class="metric-label">Blog Length</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with st.spinner("✨ Crafting your blog post... This is the magic part! 💜"):
+            blog_content = generate_blog_post(transcript, tone, length)
+        
+        # 🎉 CELEBRATE!
+        show_confetti()
+        st.success("🎉 Blog post generated successfully! Enjoy your masterpiece! 💜")
+        
+        if include_seo:
+            with st.spinner("🎯 Generating SEO metadata..."):
+                seo = generate_seo_metadata(blog_content)
             
-            with st.spinner("📜 Fetching transcript..."):
-                transcript, error = get_transcript(video_id)
+            st.markdown("### 🎯 SEO Metadata")
+            with st.expander("📊 View SEO Details", expanded=True):
+                st.markdown(f"**📌 SEO Title:** {seo['title']}")
+                st.markdown(f"**📝 Meta Description:** {seo['meta']}")
+                st.markdown(f"**🏷️ Tags:** {seo['tags']}")
+        
+        st.markdown("---")
+        st.markdown("### 📝 Your Blog Post")
+        
+        tab1, tab2 = st.tabs(["📖 Preview", "📄 Markdown"])
+        
+        with tab1:
+            st.markdown(blog_content)
+        
+        with tab2:
+            st.code(blog_content, language="markdown")
+        
+        st.download_button(
+            label="⬇️ Download Blog as Markdown",
+            data=blog_content,
+            file_name=f"blog_post_{video_id}.md",
+            mime="text/markdown",
+            use_container_width=True
+        )
+        
+        # TWITTER THREAD
+        if include_twitter:
+            st.markdown("---")
+            st.markdown("### 🐦 Twitter Thread")
+            with st.spinner("🐦 Crafting viral tweets..."):
+                twitter_thread = generate_twitter_thread(blog_content)
             
-            if error:
-                st.error(error)
-                st.info(
-                    "💡 **Try a different video!** This one might not have captions.\n\n"
-                    "✅ Best videos: tutorials, lectures, podcasts, TED talks"
-                )
-            else:
-                word_count = len(transcript.split())
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <div class="metric-value">{word_count:,}</div>
-                        <div class="metric-label">Transcript Words</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with col2:
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <div class="metric-value">{tone}</div>
-                        <div class="metric-label">Selected Tone</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with col3:
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <div class="metric-value">{length}</div>
-                        <div class="metric-label">Blog Length</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                with st.spinner("✨ Crafting your blog post... This is the magic part! 💜"):
-                    blog_content = generate_blog_post(transcript, tone, length)
-                
-                # 🎉 CELEBRATE!
-                show_confetti()
-                st.success("🎉 Blog post generated successfully! Enjoy your masterpiece! 💜")
-                
-                if include_seo:
-                    with st.spinner("🎯 Generating SEO metadata..."):
-                        seo = generate_seo_metadata(blog_content)
-                    
-                    st.markdown("### 🎯 SEO Metadata")
-                    with st.expander("📊 View SEO Details", expanded=True):
-                        st.markdown(f"**📌 SEO Title:** {seo['title']}")
-                        st.markdown(f"**📝 Meta Description:** {seo['meta']}")
-                        st.markdown(f"**🏷️ Tags:** {seo['tags']}")
-                
-                st.markdown("---")
-                st.markdown("### 📝 Your Blog Post")
-                
-                tab1, tab2 = st.tabs(["📖 Preview", "📄 Markdown"])
-                
-                with tab1:
-                    st.markdown(blog_content)
-                
-                with tab2:
-                    st.code(blog_content, language="markdown")
-                
-                st.download_button(
-                    label="⬇️ Download Blog as Markdown",
-                    data=blog_content,
-                    file_name=f"blog_post_{video_id}.md",
-                    mime="text/markdown",
-                    use_container_width=True
-                )
-                
-                # TWITTER THREAD
-                if include_twitter:
-                    st.markdown("---")
-                    st.markdown("### 🐦 Twitter Thread")
-                    with st.spinner("🐦 Crafting viral tweets..."):
-                        twitter_thread = generate_twitter_thread(blog_content)
-                    
-                    with st.container():
-                        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-                        st.markdown(twitter_thread)
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    
-                    st.download_button(
-                        label="⬇️ Download Twitter Thread",
-                        data=twitter_thread,
-                        file_name=f"twitter_thread_{video_id}.txt",
-                        mime="text/plain",
-                        use_container_width=True
-                    )
-                
-                # LINKEDIN POST
-                if include_linkedin:
-                    st.markdown("---")
-                    st.markdown("### 💼 LinkedIn Post")
-                    with st.spinner("💼 Writing your LinkedIn post..."):
-                        linkedin_post = generate_linkedin_post(blog_content)
-                    
-                    with st.container():
-                        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-                        st.markdown(linkedin_post)
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    
-                    st.download_button(
-                        label="⬇️ Download LinkedIn Post",
-                        data=linkedin_post,
-                        file_name=f"linkedin_post_{video_id}.txt",
-                        mime="text/plain",
-                        use_container_width=True
-                    )
-
+            with st.container():
+                st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+                st.markdown(twitter_thread)
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.download_button(
+                label="⬇️ Download Twitter Thread",
+                data=twitter_thread,
+                file_name=f"twitter_thread_{video_id}.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
+        
+        # LINKEDIN POST
+        if include_linkedin:
+            st.markdown("---")
+            st.markdown("### 💼 LinkedIn Post")
+            with st.spinner("💼 Writing your LinkedIn post..."):
+                linkedin_post = generate_linkedin_post(blog_content)
+            
+            with st.container():
+                st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+                st.markdown(linkedin_post)
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.download_button(
+                label="⬇️ Download LinkedIn Post",
+                data=linkedin_post,
+                file_name=f"linkedin_post_{video_id}.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
 # ==========================================
 # FOOTER
 # ==========================================

@@ -51,14 +51,12 @@ def get_transcript(video_id: str) -> tuple[str | None, str | None]:
     Returns: (transcript_text, error_message)
     """
     try:
-        # New API (v1.x+) - create instance and call fetch()
         ytt_api = YouTubeTranscriptApi()
         fetched_transcript = ytt_api.fetch(
             video_id,
             languages=['en', 'en-US', 'en-GB']
         )
         
-        # Combine all transcript snippets into one text
         full_text = " ".join([snippet.text for snippet in fetched_transcript])
         return full_text, None
         
@@ -67,7 +65,19 @@ def get_transcript(video_id: str) -> tuple[str | None, str | None]:
     except NoTranscriptFound:
         return None, "❌ No English transcript found for this video."
     except Exception as e:
-        return None, f"❌ Error fetching transcript: {str(e)}"
+        error_msg = str(e)
+        # Friendly message for IP block error (common on cloud hosting)
+        if "blocking requests" in error_msg.lower() or "ipblocked" in error_msg.lower():
+            return None, (
+                "🚫 **YouTube is blocking the server's IP address!** This is common on cloud-hosted apps.\n\n"
+                "💡 **Quick fix:** Use the **'📝 Paste Transcript'** tab instead!\n\n"
+                "**How to get a transcript from YouTube:**\n"
+                "1. Open the YouTube video\n"
+                "2. Click the **'...'** button below the video\n"
+                "3. Click **'Show transcript'**\n"
+                "4. Copy all the text and paste it in the next tab! 💜"
+            )
+        return None, f"❌ Error fetching transcript: {error_msg[:200]}"
 
 
 # ==========================================
