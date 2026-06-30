@@ -1,11 +1,18 @@
 # 🎬 YT2Blog AI 💜
 
-> Transform any YouTube video into a beautiful blog post, Twitter thread, and LinkedIn post — in seconds! ✨
+> Transform any YouTube video (or any text!) into a beautiful blog post, Twitter thread, and LinkedIn post — in seconds! ✨
 
+<div align="center">
+
+### 🚀 [**Try the Live Demo →**](https://yt2blog-ai.streamlit.app/) 💜
+
+[![Live Demo](https://img.shields.io/badge/🚀_LIVE_DEMO-Try_It_Now-9B59B6?style=for-the-badge&labelColor=E056FD)](https://yt2blog-ai.streamlit.app/)
 [![Made with Streamlit](https://img.shields.io/badge/Made_with-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Powered by Groq](https://img.shields.io/badge/Powered_by-Groq-F55036?style=for-the-badge)](https://groq.com)
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-9B59B6?style=for-the-badge)](LICENSE)
 
+</div>
 ---
 
 ## ✨ What is YT2Blog AI?
@@ -26,6 +33,7 @@ Built for content creators, marketers, students, and anyone who wants to repurpo
 | Feature | Description |
 |---------|-------------|
 | 🎬 **YouTube Integration** | Works with any YouTube URL format (regular, shorts, embed) |
+| 📝 **Paste Transcript** | Works on cloud! Paste any text or transcript directly |
 | 🧠 **AI-Powered** | Uses Llama 3.3 70B via Groq for blazing-fast generation |
 | 🎨 **Multiple Tones** | Professional, Casual, Technical, or Storytelling |
 | 📏 **Custom Length** | Short (~500), Medium (~1000), or Detailed (~1500+ words) |
