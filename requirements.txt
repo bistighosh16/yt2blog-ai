@@ -1,0 +1,7 @@
+streamlit
+groq
+youtube-transcript-api
+python-dotenv
+langchain-core
+langchain-groq
+streamlit-extras
